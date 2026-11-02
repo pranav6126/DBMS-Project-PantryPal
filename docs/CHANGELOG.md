@@ -16,3 +16,7 @@ The existing Express architecture remains; no Next.js migration is claimed.
 - Removed the four agent-captured screenshots and replaced them with the team-supplied sign-in image.
 - Retained only the Chen ER diagram; removed the table-style alternative and its generator output.
 - Added prominent localhost links to the README and report.
+
+## Local application address
+
+- Standardized the server default, README links and report examples on http://localhost:3001.

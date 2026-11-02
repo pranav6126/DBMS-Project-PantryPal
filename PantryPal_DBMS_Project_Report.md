@@ -7,7 +7,7 @@
 PES University · CSE (AI & ML) · DBMS Project  
 Report date: 2 November 2026
 
-**Open the local app:** [http://localhost:3000](http://localhost:3000) · [Alternative port 3001](http://localhost:3001). Run `npm start` on your Mac first; these addresses are local, not a GitHub-hosted deployment.
+**Open the local app:** [http://localhost:3001](http://localhost:3001). Run `npm start` on your Mac first; this address is local, not a GitHub-hosted deployment.
 
 ## 2. Student SRNs and Names
 
@@ -637,7 +637,7 @@ app.use(express.static(__dirname + "/public"));
 const pool = new Pool({
   database: process.env.PGDATABASE || "pantrypal"
 });
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(
   `PantryPal running at http://localhost:${PORT}`
 ));
@@ -697,7 +697,7 @@ node server.js
 In another Terminal tab:
 
 ```bash
-open http://localhost:3000
+open http://localhost:3001
 ```
 
 ## 8. Sample Screenshots of Application Code and Demo

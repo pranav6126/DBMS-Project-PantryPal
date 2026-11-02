@@ -2,7 +2,7 @@
 
 Personal pantry management and expiry-aware recipe recommendations with email/password authentication.
 
-**Open locally:** [http://localhost:3000](http://localhost:3000) · [Alternative port 3001](http://localhost:3001)
+**Open locally:** [http://localhost:3001](http://localhost:3001)
 
 Start the app with `npm start` on your Mac. These are local addresses, not a GitHub-hosted website.
 
@@ -29,7 +29,7 @@ npm run setup:demo
 npm start
 ```
 
-Stop the previous `node server.js` process with Ctrl+C in its Terminal before starting the updated server on port 3000. Open [PantryPal](http://localhost:3000). Unauthenticated users are redirected to the sign-in page.
+Stop the previous `node server.js` process with Ctrl+C in its Terminal before starting the updated server on port 3001. Open [PantryPal](http://localhost:3001). Unauthenticated users are redirected to the sign-in page.
 
 `setup:demo` only enables the four original demo accounts whose password hashes have not yet been provisioned. It generates a random local password and saves the emails/password to **DEMO_LOGIN.local.txt** in the project root. This file is ignored by Git. Do not upload it. Running the command again does not reset existing hashed passwords. Never publish real passwords in source code or screenshots.
 
@@ -86,7 +86,7 @@ Diagram generation uses the development dependencies `@viz-js/viz` and `sharp` t
 
 ## Configuration
 
-`PGDATABASE` defaults to `pantrypal`; standard `PGUSER`, `PGPASSWORD`, `PGHOST` and `PGPORT` configure PostgreSQL. `PORT` defaults to 3000. Set environment variables locally; no `.env` loader is installed. Use a different development port if required, for example `PORT=3001 npm start`.
+`PGDATABASE` defaults to `pantrypal`; standard `PGUSER`, `PGPASSWORD`, `PGHOST` and `PGPORT` configure PostgreSQL. `PORT` defaults to 3001. Set environment variables locally; no `.env` loader is installed. Override `PORT` only if you need a different development port.
 
 ## Database and implementation notes
 

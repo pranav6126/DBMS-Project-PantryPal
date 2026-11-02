@@ -1,5 +1,5 @@
 // PantryPal web app: Express API over PostgreSQL (core data) + MongoDB (logs/journal)
-// Run:  npm install && node server.js   ->  http://localhost:3000
+// Run:  npm install && node server.js   ->  http://localhost:3001
 const express = require("express");
 const { Pool } = require("pg");
 const { MongoClient } = require("mongodb");
@@ -231,7 +231,7 @@ app.use((error, req, res, next) => {
     error: error.status === 400 ? "Invalid request data." : "The request could not be completed. Please try again."
   });
 });
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 if (require.main === module) app.listen(PORT, () => console.log(`PantryPal running at http://localhost:${PORT}`));
 async function closeDatabases() {
   await pool.end();
