@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · PantryPal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<script src="/auth.js" defer></script>
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+  <section class="auth-story" aria-label="About PantryPal">
+    <a class="brand" href="/">Pantry<span>Pal</span></a>
+    <span class="eyebrow">LESS WASTE. MORE POSSIBILITIES.</span>
+    <h1>Your pantry.<br>Your next<br><span>great meal.</span></h1>
+    <p>Cook with what you have. Start with what needs to be used first.</p>
+    <div class="auth-example"><span>THE PANTRYPAL WAY</span><strong>Ingredients you own<br>+ a little expiry awareness</strong><p>A smarter answer to “what’s for dinner?”</p></div>
+    <small>Personal pantry · Expiry-aware recipes · Simple meal planning</small>
+  </section>
+  <section class="auth-panel" aria-labelledby="auth-title">
+    <div class="auth-switch" aria-label="Account action">
+      <button id="login-tab" class="selected" type="button" aria-pressed="true">Sign in</button>
+      <button id="register-tab" type="button" aria-pressed="false">Create account</button>
+    </div>
+    <p class="eyebrow">WELCOME TO YOUR KITCHEN COMPANION</p>
+    <h2 id="auth-title">Good food starts here.</h2>
+    <p id="auth-description" class="sub">Sign in to see your pantry and find your next meal.</p>
+    <form id="auth-form">
+      <div id="registration-fields" hidden>
+        <label for="name">Your name</label><input id="name" name="name" maxlength="80" autocomplete="name">
+        <label for="diet">Diet preference</label><select id="diet" name="diet_pref"><option value="any">No restriction</option><option value="veg">Vegetarian</option><option value="vegan">Vegan</option><option value="non-veg">Non-vegetarian</option></select>
+      </div>
+      <label for="email">Email address</label><input id="email" name="email" type="email" maxlength="120" autocomplete="username" required placeholder="you@example.com">
+      <label for="password">Password</label><input id="password" name="password" type="password" maxlength="128" autocomplete="current-password" required>
+      <p id="password-help" class="field-hint" hidden>Use 8–128 characters.</p>
+      <p id="auth-error" class="form-error" role="alert" hidden></p>
+      <button class="act auth-submit" id="submit" type="submit">Sign in to PantryPal</button>
+    </form>
+    <p class="auth-footnote">Your pantry stays with your account. Sign out when you’re finished on a shared computer.</p>
+  </section>
+</main>
+</body></html>

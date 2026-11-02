@@ -1,9 +1,9 @@
 -- ============================================================
 -- PantryPal : PostgreSQL (RDBMS side)
--- 8 tables, 1 trigger, 2 functions, 1 view, indexes
+-- 9 tables, 1 trigger, 2 functions, 1 view, indexes
 -- ============================================================
 
-DROP TABLE IF EXISTS rating, meal_plan_item, meal_plan, pantry_item,
+DROP TABLE IF EXISTS app_session, rating, meal_plan_item, meal_plan, pantry_item,
                      recipe_ingredient, ingredient, recipe, app_user CASCADE;
 
 -- 1. USERS (roles: admin / user)
@@ -11,7 +11,7 @@ CREATE TABLE app_user (
     user_id     SERIAL PRIMARY KEY,
     name        VARCHAR(80)  NOT NULL,
     email       VARCHAR(120) NOT NULL UNIQUE,
-    password_hash VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     role        VARCHAR(10)  NOT NULL DEFAULT 'user' CHECK (role IN ('admin','user')),
     diet_pref   VARCHAR(15)  NOT NULL DEFAULT 'any' CHECK (diet_pref IN ('any','veg','vegan','non-veg')),
     created_at  TIMESTAMP    NOT NULL DEFAULT now()
@@ -161,3 +161,18 @@ RETURNS TABLE (recipe_id INT, title VARCHAR, have_cnt BIGINT, need_cnt BIGINT,
           END
     ORDER BY 7 DESC, r.title;
 $$ LANGUAGE sql STABLE;
+
+-- Authentication sessions and case-insensitive email uniqueness
+ALTER TABLE app_user ALTER COLUMN password_hash TYPE VARCHAR(255);
+-- Abort rather than silently merge pre-existing case-insensitive email duplicates.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email_lower ON app_user (lower(email));
+CREATE TABLE IF NOT EXISTS app_session (
+    session_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES app_user(user_id) ON DELETE CASCADE,
+    token_hash CHAR(64) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    CHECK (expires_at > created_at)
+);
+CREATE INDEX IF NOT EXISTS idx_session_user ON app_session(user_id);
+CREATE INDEX IF NOT EXISTS idx_session_expiry ON app_session(expires_at);

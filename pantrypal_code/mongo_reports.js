@@ -54,8 +54,8 @@ printjson(db.search_logs.find(
 // ------------------------------------------------------------
 // CROSS-DATABASE LINK (how PostgreSQL and MongoDB work together):
 // 1. Postgres  -> fn_rank_recipes(user_id) returns the ranked recipes.
-// 2. Next.js API then writes the search into Mongo search_logs
+// 2. Express API then writes the search into Mongo search_logs
 //    { user_id, ingredients, top_result, ... } using the same user_id.
-// 3. A recipe page reads cooking_journal notes by recipe_id from Mongo
-//    and the recipe details from Postgres, and merges them in the API.
+// 3. The authenticated MongoDB reports route summarizes cooking_journal.
+//    Regular users see their own documents; admins see all users.
 // ------------------------------------------------------------

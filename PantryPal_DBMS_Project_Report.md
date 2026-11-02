@@ -18,13 +18,13 @@ Report date: 2 November 2026
 
 PantryPal helps users choose recipes using ingredients already available in their kitchen. It stores pantry purchase dates and ingredient shelf life, estimates remaining days, and recommends recipes using ingredient coverage and expiry urgency. Users can inspect their pantry, identify missing ingredients, add recipes to a meal plan and view database reports. The aim is to simplify meal selection and encourage the use of ingredients before expiry.
 
-PostgreSQL manages eight related tables and implements constraints, indexes, a view, two stored functions, a trigger and CTE-based ranking. MongoDB stores search logs and cooking journals containing arrays and nested documents. Node.js and Express connect both databases to an HTML, CSS and JavaScript interface. The ranking score gives 70 percent weight to ingredient coverage and 30 percent to urgency, while filtering vegetarian and vegan preferences. The supplied screenshots demonstrate PostgreSQL queries, application screens and MongoDB report output.
+PostgreSQL manages nine related tables (eight business tables and one authentication-session table) and implements constraints, indexes, a view, two stored functions, a trigger and CTE-based ranking. MongoDB stores search logs and cooking journals containing arrays and nested documents. Node.js and Express connect both databases to an HTML, CSS and JavaScript interface. The ranking score gives 70 percent weight to ingredient coverage and 30 percent to urgency, while filtering vegetarian and vegan preferences. The supplied screenshots demonstrate PostgreSQL queries, application screens and MongoDB report output.
 
 ## 4. Technology Stack
 
 | Layer | Technology | Actual use |
 | --- | --- | --- |
-| Page structure | HTML5 | Header, user selector, four tab sections, tables and buttons. |
+| Page structure | HTML5 | Login/registration, signed-in identity, four tab sections, tables and buttons. |
 | Styling | CSS | Grid and Flexbox layouts, responsive cards, expiry colors, progress bars and score rings. |
 | Browser behavior | Plain JavaScript | Event handlers, Fetch API calls and DOM updates; no React is used. |
 | Server runtime | Node.js | Runs server-side JavaScript and database drivers. |
@@ -44,13 +44,19 @@ Ranking request → optional MongoDB search_logs insertion
 MongoDB report request → aggregation pipelines → JSON → UI tables
 ```
 
-The UI has **Cook tonight**, **My pantry**, **SQL reports** and **MongoDB reports** tabs. `currentUser` stores the selected demo user. Clicking a tab calls its loader; selecting another user reloads that user’s data.
+The UI starts with email/password sign-in or registration. After authentication it has **Cook tonight**, **My pantry**, **SQL reports** and **MongoDB reports** tabs. `signedInUser` holds identity returned by `/api/auth/me`; the server determines ownership from the session cookie. To compare users, sign out and sign in to the other account. The pantry form lets new users add ingredients, quantities and purchase dates.
 
 CSS variables hold the color palette. Grid arranges recipe cards; Flexbox aligns controls. A media query changes the top card to one column on small screens. A conic gradient draws the score ring and JavaScript sets percentage widths for coverage and urgency bars.
 
 ### 4.2 ER diagram and entities
 
-![PantryPal ER diagram](PantryPal_Report_Assets/er-diagram.png)
+![PantryPal conceptual ER diagram in Chen notation](PantryPal_Report_Assets/er-diagram.png)
+
+**Standard Chen notation:** rectangles represent entities, diamonds represent relationships, ovals represent selected attributes and underlined attributes form primary keys. Parent/child cardinalities and optionality are labeled.
+
+![Complete logical ER diagram in Crow’s Foot notation](PantryPal_Report_Assets/er-crows-foot.png)
+
+The Crow’s Foot version lists every column of all nine tables with PK/FK/UK markings, optionality and identifying/non-identifying relationships. [Open Chen SVG](PantryPal_Report_Assets/er-diagram.svg) · [Open Crow’s Foot SVG](PantryPal_Report_Assets/er-crows-foot.svg) · [Notation and migration details](docs/database-design.md). Regenerate with `npm run diagrams`.
 
 | Table | Purpose | Key relationships or constraints |
 | --- | --- | --- |
@@ -62,10 +68,11 @@ CSS variables hold the color palette. Grid arranges recipe cards; Flexbox aligns
 | `rating` | A user’s recipe score and comment | FKs to user/recipe; unique pair; score from 1 to 5. |
 | `meal_plan` | Plan owner, name and week start | PK `plan_id`; user FK. |
 | `meal_plan_item` | Individual recipe/date/slot within a plan | FKs to plan/recipe; breakfast/lunch/dinner CHECK. |
+| `app_session` | Authenticated browser sessions | PK session_id; user FK; unique SHA-256 token_hash; creation and expiry timestamps. |
 
 **PK** uniquely identifies a row; **FK** connects it to another table. One user can own many pantry entries, create many recipes, give many ratings and own many meal plans. One ingredient can appear in many pantry entries. One recipe can receive many ratings and appear in many scheduled meal entries.
 
-`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The SQL schema also contains `app_user.created_at`, omitted in the diagram.
+`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The logical diagram includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The conceptual diagram intentionally selects attributes for readability; the logical diagram contains the complete field list.
 
 ## 5. SQL Database Commands
 
@@ -77,6 +84,8 @@ Run the following in the **normal Terminal**, from `pantrypal_code`, for a fresh
 createdb pantrypal
 psql -d pantrypal -f schema.sql
 psql -d pantrypal -f seed.sql
+# From the project root, provision local demo passwords:
+# npm run setup:demo
 psql -d pantrypal
 ```
 
@@ -104,6 +113,17 @@ SELECT * FROM meal_plan_item;
 ```
 
 Do not enter a `psql -d ...` shell command inside psql. If the prompt is `pantrypal-#` because an unfinished command is buffered, enter `\r` to clear it. Use `\q` to return to the normal Terminal.
+
+### 5.1a Existing installation authentication migration
+
+From the project root, without resetting data:
+
+```bash
+psql -d pantrypal -v ON_ERROR_STOP=1 -f pantrypal_code/migrations/001_auth.sql
+npm run setup:demo
+```
+
+This adds `app_session`, widens `password_hash` to VARCHAR(255), and creates case-insensitive email uniqueness. Local demo credentials are generated into ignored `DEMO_LOGIN.local.txt`. Do not publish this file. Existing scrypt hashes are not reset.
 
 ### 5.2 Database features and their use cases
 
@@ -241,7 +261,7 @@ The screenshots show Aarav’s Paneer Fried Rice score at **0.689** and Meera’
 
 **Use case:** Keep a meal-plan insert and its trigger counter update together when a request succeeds or fails.
 
-The `/api/plan` route uses one borrowed PostgreSQL connection:
+The `/api/plan` route derives the user ID from the verified session and uses one borrowed PostgreSQL connection. Registration creates a default plan; the client submits only recipe_id:
 
 ```text
 pool.connect → BEGIN → find first existing plan
@@ -250,7 +270,7 @@ pool.connect → BEGIN → find first existing plan
 On SQL failure: ROLLBACK → client.release
 ```
 
-The UI sends `user_id` and `recipe_id` as JSON. The route requires an existing meal plan; it does not create a new one. MongoDB logging happens separately after commit and is not part of a cross-database atomic transaction.
+The UI sends only `recipe_id` as JSON; `req.user.user_id` supplies the owner. The route requires an existing meal plan; it does not create a new one. MongoDB logging happens separately after commit and is not part of a cross-database atomic transaction.
 
 #### Feature 6 — JOINs
 
@@ -292,12 +312,13 @@ FROM recipe_ingredient ri
 JOIN ingredient i USING (ingredient_id)
 WHERE ri.recipe_id = $2 AND NOT ri.is_optional
   AND ri.ingredient_id NOT IN (
-      SELECT ingredient_id FROM pantry_item WHERE user_id = $1
+      SELECT ingredient_id FROM v_pantry_expiry
+      WHERE user_id = $1 AND days_left >= 0
   )
 ORDER BY i.name;
 ```
 
-The `pg` driver supplies `$1` as the user ID and `$2` as the recipe ID. These placeholders are not ready to paste unchanged as ordinary psql SQL. The inner query returns pantry ingredient IDs; the outer query selects required ingredients outside that set. This checks presence only, so expired stock is not excluded here, unlike in ranking. Report R6 also uses a correlated subquery to count meals separately for each user without multiplying them by rating rows.
+The `pg` driver supplies `$1` from the authenticated session and `$2` as the recipe ID. These placeholders are not ready to paste unchanged as ordinary psql SQL. The inner query returns pantry ingredient IDs; the outer query selects required ingredients outside that set. This excludes expired pantry rows, matching ranking. It still checks ingredient presence rather than sufficient quantity. Report R6 also uses a correlated subquery to count meals separately for each user without multiplying them by rating rows.
 
 #### Feature 9 — Indexes
 
@@ -310,7 +331,7 @@ CREATE INDEX idx_ri_ingredient ON recipe_ingredient(ingredient_id);
 CREATE INDEX idx_mpi_plan ON meal_plan_item(plan_id);
 ```
 
-These are definitions already run by `schema.sql`; use `\di` to inspect them instead of creating duplicates. The screenshot lists **16 total indexes**: these four plus indexes created by primary key and unique constraints. Actual index use depends on the query planner and dataset; no speed benchmark is claimed.
+These are definitions already run by `schema.sql`; use `\di` to inspect them instead of creating duplicates. The historical screenshot lists **16 indexes** before authentication. The updated schema additionally creates case-insensitive email uniqueness and the session table’s primary, unique-token, user and expiry indexes. Actual index use depends on the query planner and dataset; no speed benchmark is claimed.
 
 MongoDB also creates compound and multikey indexes:
 
@@ -572,25 +593,36 @@ db.search_logs.find(
 ).toArray();
 ```
 
-A null match also includes documents missing the field. Seeded and application-created logs explicitly store it. All six reports exist in the script; the UI implements M1–M3.
+A null match also includes documents missing the field. Seeded and application-created logs explicitly store it. All six reports exist in the script; the UI implements M1–M3. Regular signed-in users see only their search/journal documents because the API prefixes each aggregation with a user_id match. Admins see all documents. Command-line reports run under the database operator and remain global.
 
 ## 7. Next.js Project Tree Structure
 
-**Framework status:** The supplied project is implemented with Express and static HTML, not Next.js. There is no `next` dependency or Next.js `app/` tree. The following is the actual source tree. If Next.js is mandatory, migration or instructor acceptance of Express remains required; the report does not claim a migration has happened.
+**Framework status:** The project is implemented with Express, authenticated APIs and static HTML, not Next.js. There is no `next` dependency or Next.js `app/` tree. The following is the actual source tree. If Next.js is mandatory, migration or instructor acceptance of Express remains required; the report does not claim a migration has happened.
 
 ```text
 PantryPal/
-├── package.json
-├── README.md
 ├── server.js
+├── package.json / package-lock.json
+├── README.md / PantryPal_DBMS_Project_Report.md
+├── lib/
+│   ├── auth.js
+│   └── passwords.js
 ├── public/
-│   └── index.html
-└── pantrypal_code/
-    ├── schema.sql
-    ├── seed.sql
-    ├── reports.sql
-    ├── mongo_setup.js
-    └── mongo_reports.js
+│   ├── index.html / app.js / styles.css
+│   └── auth.html / auth.js
+├── pantrypal_code/
+│   ├── schema.sql / seed.sql / reports.sql
+│   ├── mongo_setup.js / mongo_reports.js
+│   └── migrations/001_auth.sql
+├── scripts/
+│   ├── setup-demo-auth.js
+│   └── generate-er-diagrams.js
+├── tests/auth.test.js
+├── docs/
+│   ├── database-design.md / er-diagram.mmd
+│   └── CHANGELOG.md
+└── PantryPal_Report_Assets/
+    └── screenshots and generated ER diagrams
 ```
 
 ### 7.1 Node.js and Express code
@@ -600,7 +632,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const { MongoClient } = require("mongodb");
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "16kb" }));
 app.use(express.static(__dirname + "/public"));
 const pool = new Pool({
   database: process.env.PGDATABASE || "pantrypal"
@@ -615,30 +647,45 @@ app.listen(PORT, () => console.log(
 
 | Route | Purpose |
 | --- | --- |
-| `GET /api/users` | Returns demo users. |
-| `GET /api/pantry/:uid` | Returns the expiry view for one user. |
-| `GET /api/rank/:uid` | Calls the ranking function and optionally logs the search. |
-| `GET /api/missing/:uid/:rid` | Returns missing required ingredients. |
+| `POST /api/auth/register` | Creates an account, default meal plan and session. |
+| `POST /api/auth/login` | Verifies a password and issues a session cookie. |
+| `POST /api/auth/logout` | Revokes the session. |
+| `GET /api/auth/me` | Returns the signed-in identity. |
+| `GET /api/ingredients` | Lists the ingredient catalogue for a signed-in user. |
+| `POST /api/pantry` | Adds or updates the signed-in user’s pantry entry. |
+| `GET /api/pantry` | Returns the expiry view for one user. |
+| `GET /api/rank` | Calls the ranking function and optionally logs the search. |
+| `GET /api/missing/:rid` | Returns missing required ingredients. |
 | `POST /api/plan` | Inserts tomorrow’s dinner into an existing plan. |
-| `GET /api/reports` | Returns six PostgreSQL reports. |
-| `GET /api/mongo` | Returns three MongoDB reports or an unavailable flag. |
+| `GET /api/reports` | Returns six SQL reports; personal rows are account-scoped unless admin. |
+| `GET /api/mongo` | Returns account-scoped MongoDB reports, global for admins, or an unavailable flag. |
 
 `req.params` holds URL values; `req.body` holds parsed JSON. `res.json` sends result records. `async/await` waits for database work without blocking the entire server. `wrap()` catches route failures and sends status 500 with an error message. SQL query parameters use `$1`, `$2` and a separate values array to avoid concatenating supplied values into SQL.
 
 ### 7.2 Browser JavaScript example
 
 ```javascript
-// Plan-button request in public/index.html
+// Plan-button request in public/app.js
 const p = await api("/api/plan", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ user_id: currentUser, recipe_id: r.recipe_id })
+  body: JSON.stringify({ recipe_id: r.recipe_id })
 });
 ```
 
-`api()` uses `fetch`, parses JSON and throws for a failed HTTP response. `JSON.stringify` converts the object into request text; Express parses it. The browser then displays the returned recipe title and before/after counter in a toast. `el()` creates HTML elements and uses `textContent` for data text; `renderTable()` creates report headers and rows from returned records.
+`api()` uses `fetch`, parses JSON and throws for a failed HTTP response. `JSON.stringify` converts the object into request text; Express parses it. The browser displays the planned recipe and updated counter in a toast. Ownership comes from the HttpOnly session cookie; no user ID is selected in the browser. `el()` creates HTML elements and uses `textContent` for data text; `renderTable()` creates report headers and rows from returned records.
 
-### 7.3 Run the application
+### 7.3 Authentication implementation
+
+`public/auth.html` and `public/auth.js` provide sign-in and registration. `lib/passwords.js` generates a random salt and uses Node.js scrypt to derive a password hash; verification uses `timingSafeEqual`. Raw passwords are never saved in the database.
+
+`lib/auth.js` issues a cryptographically random opaque token in an HttpOnly, SameSite=Strict cookie. `app_session` stores only its SHA-256 hash, with an eight-hour expiry. Middleware joins the session to `app_user` and sets `req.user`; every subsequent API route requires it. Logout deletes the session. The cookie carries Secure under NODE_ENV=production for HTTPS hosting. Cross-origin JSON mutations are rejected and login/register attempts are rate-limited in process.
+
+Registration is transactional: create a regular user, create their default weekly meal plan, insert a session, then commit. Role is fixed to user by the server; a request cannot promote itself to admin. Personal pantry, ranking and meal-plan operations use session ownership. Recipe aggregate reports are shared, but personal SQL activity rows and MongoDB documents are scoped to the signed-in account; admins see all activity.
+
+The frontend no longer has an unrestricted user selector. New users can add pantry ingredients through My pantry. The seed accounts are disabled until local demo password provisioning. No usable public default password is committed.
+
+### 7.4 Run the application
 
 From the project root:
 
@@ -655,7 +702,7 @@ open http://localhost:3000
 
 ## 8. Sample Screenshots of Application Code and Demo
 
-The following are the supplied screenshots, preserved without alteration. The captions identify what each image demonstrates. Images remain readable at full size when opened from the asset folder. Database values are snapshots and may change as dates pass or new searches/meals are added.
+Figures 1–12 are the supplied screenshots from the earlier demo version, preserved without alteration. They show the eight original business tables, historical counts and the former demo user selector. The current application adds authentication and a ninth session table; Figures 13 onward show the updated UI. Do not treat the old selector or table count as current behavior. The captions identify what each image demonstrates. Images remain readable at full size when opened from the asset folder. Database values are snapshots and may change as dates pass or new searches/meals are added.
 
 ### Figure 1 — PostgreSQL connection and eight tables
 
@@ -729,6 +776,30 @@ Shows user and recipe IDs linking search history to relational records, and vari
 
 Shows an executed unwind, group, sort and limit pipeline. Results include onion 17, egg 14 and tomato 11.
 
+### Figure 13 — Current sign-in page
+
+![PantryPal email and password sign-in](PantryPal_Report_Assets/13-auth-login.png)
+
+The authentication entry page replaces the old demo selector. API middleware verifies the signed-in session before returning private data.
+
+### Figure 14 — Current account registration
+
+![PantryPal registration form](PantryPal_Report_Assets/14-auth-register.png)
+
+Registration takes a name, email, diet preference and password. It creates a regular user, default weekly plan and session in one transaction.
+
+### Figure 15 — Current authenticated recipe recommendations
+
+![Recommendations for signed-in Aarav](PantryPal_Report_Assets/15-authenticated-recipes.png)
+
+The header identifies the signed-in account and provides Sign out. Recipe cards label the counter as planned. User ownership is no longer selected by a browser ID.
+
+### Figure 16 — Current pantry form and expiry groups
+
+![Authenticated pantry with ingredient entry form](PantryPal_Report_Assets/16-authenticated-pantry.png)
+
+The signed-in user can add or update ingredients with purchase dates and quantities. Existing pantry information is preserved by the authentication migration.
+
 ### 8.1 Evidence still to add
 
 - An actual VS Code screenshot of application source. This report contains source code blocks and an executed MongoDB pipeline screenshot, but no supplied IDE screenshot.
@@ -737,16 +808,17 @@ Shows an executed unwind, group, sort and limit pipeline. Results include onion 
 
 ### 8.2 Suggested demonstration order
 
-1. Show the eight tables and ER relationships.
-2. Show `fn_rank_recipes` results for Aarav and Meera.
-3. Explain the `need` and `have` CTEs, expiry view and score formula.
-4. Show the recommendation cards, pantry expiry and missing-ingredient button.
-5. Insert a meal entry to demonstrate the trigger and transaction.
-6. Show SQL report summaries, MongoDB collections and the aggregation pipeline.
+1. Show all nine tables and explain the eight business entities plus authentication sessions.
+2. Sign in; to compare accounts, sign out and sign in as the other user.
+3. Show `fn_rank_recipes` results for Aarav and Meera.
+4. Explain the `need` and `have` CTEs, expiry view and score formula.
+5. Show the recommendation cards, pantry expiry and missing-ingredient button.
+6. Insert a meal entry to demonstrate the trigger and transaction.
+7. Show SQL report summaries, MongoDB collections and the aggregation pipeline.
 
 ## 9. Evaluation Rubrics — Completion Status
 
-Status reflects the code and supplied screenshot evidence. Official grading weights were not provided. Screenshots are user-provided demonstration evidence; no independent database rerun is claimed here.
+Status reflects the code and supplied screenshot evidence. Official grading weights were not provided. Historical screenshots are user-provided demonstration evidence. Authentication and authorization checks run in isolated databases with `npm test`; current browser screenshots verify the updated flow.
 
 | Requirement | Status | Evidence or remaining action |
 | --- | --- | --- |
@@ -754,18 +826,20 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Student SRNs and names | Complete | Section 2. |
 | Abstract | Complete | Section 3. |
 | Technology stack | Complete | Section 4 documents the implemented stack. |
-| Minimum five relational tables | Implemented and shown | Eight tables in the ER diagram and Figure 1. |
+| Minimum five relational tables | Implemented | Nine tables: eight business entities and app_session; current standard ER diagrams above. Figure 1 is historical. |
 | SQL database commands | Implemented and documented | Setup, inspection, table data and all six report queries. |
 | More than four database feature use cases | Documented | Eleven features in Section 5.2, with actual use cases and code/examples. |
 | Trigger | Implemented and installed | Figure 4 shows its definition; before/after insert capture remains to add. |
 | View, CTEs and stored function | Implemented | SQL definitions/excerpts and ranking results in Figure 3; pantry UI in Figure 7. |
 | Transactions, joins and constraints | Implemented | Schema and API code; constraints visible in Figure 4. |
-| Indexes | Implemented and shown | Figure 5 lists 16 total PostgreSQL indexes. |
+| Indexes | Implemented and shown | Figure 5 shows the historical 16 indexes; authentication adds five session/email indexes. |
 | NoSQL database commands | Implemented and demonstrated | MongoDB collections, documents and pipeline results in Figures 10–12. |
 | Reports | Implemented with partial/full UI evidence | Six SQL reports in code, R1–R4 partly shown; M1–M3 fully shown. M4–M6 are script reports. |
 | Novelty | Implemented and demonstrated | Expiry-aware rankings differ between users; Figures 3, 6 and 7. |
 | Next.js project tree | Requirement unresolved | Actual code uses Express. Resolve required framework before final submission. |
-| Application screenshots | Included | Recommendation, pantry, SQL and MongoDB screens in Section 8. |
+| Authentication | Implemented and tested | Register, sign in, sign out, session expiry and ownership checks; current screenshots in Section 8. |
+| Standard ER notation | Updated | Chen conceptual and complete Crow’s Foot logical diagrams with editable sources. |
+| Application screenshots | Included | Historical sample use plus current authenticated UI screenshots in Section 8. |
 | Application code screenshot | Partially covered | Executed Mongo pipeline image and source blocks included; IDE screenshot pending. |
 | Markdown report | Created | This `.md` file and its linked image assets. |
 | GitHub repository link | Provided | https://github.com/pranav6126/DBMS-Project-PantryPal |
@@ -774,15 +848,15 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 
 **Repository URL: https://github.com/pranav6126/DBMS-Project-PantryPal**
 
-The repository should contain the application source, database scripts, README setup steps, this report and `PantryPal_Report_Assets/`. Exclude `node_modules`, credentials and local configuration files containing secrets. Keep the report and asset folder together so relative image links work on GitHub.
+The repository contains the application source, authentication modules, migration, tests, diagram generator, README setup steps, this report and `PantryPal_Report_Assets/`. Exclude `node_modules`, credentials and local configuration files containing secrets. Keep the report and asset folder together so relative image links work on GitHub.
 
 ### 9.2 Current implementation limits
 
-- The user selector is a demo selector, not login or authentication; stored sample password values are not evidence of a working authentication system.
-- The UI does not include pantry editing or journal entry screens.
+- Authentication uses salted password hashes and expiring server-side sessions. Password reset, email verification and a distributed rate limiter are not implemented.
+- The UI supports adding/updating pantry ingredients but does not include journal entry editing.
 - Expiry is an estimate from catalogue shelf life and purchase date.
 - Ingredient quantity is text and is not checked for sufficiency.
-- The missing-ingredient query checks presence, including expired pantry rows; ranking excludes expired stock.
+- Both ranking and missing-ingredient checks exclude expired stock; quantity sufficiency is not calculated.
 - The planning counter increases on insert and does not represent confirmed meals cooked.
 - MongoDB writes are optional and separate from the PostgreSQL transaction.
 - Next.js is not implemented in the supplied project.
@@ -790,10 +864,11 @@ The repository should contain the application source, database scripts, README s
 ### 9.3 Submission checklist
 
 - [x] Add names, SRNs, abstract and implemented stack.
-- [x] Include ER diagram and database command explanations.
+- [x] Include standard Chen and Crow’s Foot ER diagrams, session table and database explanations.
+- [x] Implement registration, sign-in, logout and session-scoped APIs.
 - [x] Explain more than four database feature use cases.
 - [x] Include supplied PostgreSQL, UI and MongoDB screenshots.
-- [ ] Add an IDE code screenshot and before/after trigger evidence.
+- [ ] Add an IDE code screenshot and before/after trigger evidence; source excerpts and installed-trigger evidence are already included.
 - [ ] Resolve the Next.js requirement.
 - [x] Include the GitHub repository URL.
 
@@ -801,4 +876,4 @@ The repository should contain the application source, database scripts, README s
 
 - Supplied `PantryPal_App_new_UI (1).zip`: `public/index.html`, `server.js`, `package.json`, README and database scripts.
 - Supplied ER diagram and project status PDF. Actual code takes priority where the earlier status PDF describes unimplemented screens.
-- Twelve supplied screenshots: PostgreSQL commands/results, application use and MongoDB commands/results, added to Section 8.
+- Twelve original supplied screenshots plus four current browser captures showing sign-in, registration, authenticated recommendations and the pantry form.

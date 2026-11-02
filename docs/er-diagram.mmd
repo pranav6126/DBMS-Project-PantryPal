@@ -1,0 +1,79 @@
+erDiagram
+  app_user {
+    SERIAL user_id PK
+    VARCHAR_80_ name
+    VARCHAR_120_ email UK
+    VARCHAR_255_ password_hash
+    VARCHAR_10_ role
+    VARCHAR_15_ diet_pref
+    TIMESTAMP created_at
+  }
+  ingredient {
+    SERIAL ingredient_id PK
+    VARCHAR_60_ name UK
+    VARCHAR_30_ category
+    INT shelf_life_days
+  }
+  recipe {
+    SERIAL recipe_id PK
+    VARCHAR_120_ title
+    VARCHAR_40_ cuisine
+    VARCHAR_10_ diet_type
+    INT prep_minutes
+    TEXT instructions
+    INT calories
+    INT times_cooked
+    INT created_by FK
+  }
+  pantry_item {
+    SERIAL pantry_id PK
+    INT user_id FK
+    INT ingredient_id FK
+    DATE purchased_on
+    VARCHAR_30_ quantity
+  }
+  recipe_ingredient {
+    INT recipe_id PK, FK
+    INT ingredient_id PK, FK
+    VARCHAR_30_ quantity
+    BOOLEAN is_optional
+  }
+  rating {
+    SERIAL rating_id PK
+    INT user_id FK
+    INT recipe_id FK
+    INT score
+    TEXT comment
+    DATE rated_on
+  }
+  meal_plan {
+    SERIAL plan_id PK
+    INT user_id FK
+    VARCHAR_60_ plan_name
+    DATE week_start
+  }
+  meal_plan_item {
+    SERIAL item_id PK
+    INT plan_id FK
+    INT recipe_id FK
+    DATE planned_date
+    VARCHAR_10_ meal_slot
+  }
+  app_session {
+    SERIAL session_id PK
+    INT user_id FK
+    CHAR_64_ token_hash UK
+    TIMESTAMPTZ created_at
+    TIMESTAMPTZ expires_at
+  }
+  app_user ||..o{ pantry_item : "owns"
+  ingredient ||..o{ pantry_item : "stocked as"
+  app_user |o..o{ recipe : "creates"
+  recipe ||--o{ recipe_ingredient : "requires"
+  ingredient ||--o{ recipe_ingredient : "used in"
+  app_user ||..o{ rating : "gives"
+  recipe ||..o{ rating : "receives"
+  app_user ||..o{ meal_plan : "owns plan"
+  meal_plan ||..o{ meal_plan_item : "contains"
+  recipe ||..o{ meal_plan_item : "scheduled in"
+  app_user ||..o{ app_session : "authenticates"

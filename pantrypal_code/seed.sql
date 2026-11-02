@@ -1,12 +1,13 @@
+-- Run npm run setup:demo after seeding to provision local passwords.
 -- ============================================================
 -- PantryPal sample data
 -- ============================================================
 
 INSERT INTO app_user (name, email, password_hash, role, diet_pref) VALUES
- ('Admin Curator', 'admin@pantrypal.com',  'hash_admin',  'admin', 'any'),
- ('Aarav Nair',    'aarav@example.com',    'hash_aarav',  'user',  'veg'),
- ('Meera Iyer',    'meera@example.com',    'hash_meera',  'user',  'any'),
- ('Rohan Das',     'rohan@example.com',    'hash_rohan',  'user',  'non-veg');
+ ('Admin Curator', 'admin@pantrypal.com',  '!disabled',  'admin', 'any'),
+ ('Aarav Nair',    'aarav@example.com',    '!disabled',  'user',  'veg'),
+ ('Meera Iyer',    'meera@example.com',    '!disabled',  'user',  'any'),
+ ('Rohan Das',     'rohan@example.com',    '!disabled',  'user',  'non-veg');
 
 INSERT INTO ingredient (name, category, shelf_life_days) VALUES
  ('Paneer',        'dairy',     6),
