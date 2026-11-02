@@ -11,7 +11,7 @@
 <polygon fill="white" stroke="none" points="-32.4,32.4 -32.4,-1466.6 1180.12,-1466.6 1180.12,32.4 -32.4,32.4"/>
 <text xml:space="preserve" text-anchor="middle" x="573.86" y="-58.6" font-family="Helvetica,sans-Serif" font-size="14.00">PantryPal conceptual ER diagram — Chen notation</text>
 <text xml:space="preserve" text-anchor="middle" x="573.86" y="-41.8" font-family="Helvetica,sans-Serif" font-size="14.00">Rectangle: entity &#160;&#160;Diamond: relationship &#160;&#160;Ellipse: attribute &#160;&#160;Underline: primary key</text>
-<text xml:space="preserve" text-anchor="middle" x="573.86" y="-25" font-family="Helvetica,sans-Serif" font-size="14.00">Selected attributes shown for readability; Crow’s Foot diagram lists every column.</text>
+<text xml:space="preserve" text-anchor="middle" x="573.86" y="-25" font-family="Helvetica,sans-Serif" font-size="14.00">Selected attributes shown for readability; schema.sql lists every column.</text>
 <text xml:space="preserve" text-anchor="middle" x="573.86" y="-8.2" font-family="Helvetica,sans-Serif" font-size="14.00">Labels describe the number of related rows at each end.</text>
 <!-- app_user -->
 <g id="node1" class="node">

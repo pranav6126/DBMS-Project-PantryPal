@@ -1,4 +1,4 @@
-// Regenerate both standard ER notations from the explicit schema model below.
+// Regenerate the Chen ER diagram from the explicit schema model below.
 const { writeFileSync, mkdirSync } = require('node:fs');
 const { instance } = require('@viz-js/viz');
 const sharp = require('sharp');
@@ -29,17 +29,9 @@ const selected = {
   meal_plan:['plan_id','plan_name','week_start'],meal_plan_item:['item_id','planned_date','meal_slot'],
   app_session:['session_id','token_hash','expires_at']
 };
-const esc = text => String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 (async () => {
   mkdirSync(destination,{recursive:true});const viz=await instance();
   const common='graph [fontname="Helvetica", bgcolor="white", pad="0.45", nodesep="0.45", ranksep="1.1", splines=polyline]; node [fontname="Helvetica", fontsize=12]; edge [fontname="Helvetica", fontsize=10, color="#52665b", fontcolor="#263b2d"];';
-  let logical='digraph ER { rankdir=LR; '+common+'\n';
-  for(const [name,fields] of Object.entries(entities)) {
-    const rows=fields.map(([field,type,key=''])=>`<TR><TD ALIGN="LEFT">${key}</TD><TD ALIGN="LEFT">${key.includes('PK')?'<U>'+field+'</U>':field}</TD><TD ALIGN="LEFT">${esc(type)}</TD></TR>`).join('');
-    logical+=`${name} [shape=plain label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="6" COLOR="#8a9a8e"><TR><TD COLSPAN="3" BGCOLOR="#133f2b"><FONT COLOR="white"><B>${name}</B></FONT></TD></TR>${rows}</TABLE>>];\n`;
-  }
-  for(const [parent,child,label,fk,nullable] of links) logical+=`${parent} -> ${child} [dir=both arrowtail="${nullable?'teeodot':'teetee'}" arrowhead="crowodot" arrowsize=0.9 style="${child==='recipe_ingredient'?'solid':'dashed'}" label="${fk}"];\n`;
-  logical+='label="PantryPal logical ER diagram — Crow’s Foot notation\nPK: primary key   FK: foreign key   UK: unique key\nCircle: zero   Bar: one   Crow’s foot: many\nChildren are optional collections; recipe.created_by is nullable.\nSolid: identifying relationship   Dashed: non-identifying relationship"; labelloc=b; fontsize=14; }';
   let chen='graph ER { rankdir=LR; '+common+'\n';
   for(const [name,fields] of Object.entries(entities)) {
     chen+=`${name} [shape=box style=filled fillcolor="#e7f1e9" color="#205e3a" label="${name}" fontsize=16 penwidth=1.4];\n`;
@@ -52,22 +44,13 @@ const esc = text => String(text).replaceAll('&','&amp;').replaceAll('<','&lt;').
     chen+=`relationship${i} [shape=diamond label="${label}" style=filled fillcolor="#f7f5e8" color="#9c946f"];\n`;
     chen+=`${parent} -- relationship${i} [headlabel="${nullable?'0..1':'1'}" labeldistance=1.7]; relationship${i} -- ${child} [taillabel="0..N" labeldistance=1.7];\n`;
   });
-  chen+='label="PantryPal conceptual ER diagram — Chen notation\nRectangle: entity   Diamond: relationship   Ellipse: attribute   Underline: primary key\nSelected attributes shown for readability; Crow’s Foot diagram lists every column.\nLabels describe the number of related rows at each end."; labelloc=b; fontsize=14; }';
-  for(const [name,dot] of [['er-diagram',chen],['er-crows-foot',logical]]) {
+  chen+='label="PantryPal conceptual ER diagram — Chen notation\nRectangle: entity   Diamond: relationship   Ellipse: attribute   Underline: primary key\nSelected attributes shown for readability; schema.sql lists every column.\nLabels describe the number of related rows at each end."; labelloc=b; fontsize=14; }';
+  for(const [name,dot] of [['er-diagram',chen]]) {
     writeFileSync(`${destination}/${name}.dot`,dot);
     const svg=viz.renderString(dot,{format:'svg',engine:'dot'});
     writeFileSync(`${destination}/${name}.svg`,svg);
     await sharp(Buffer.from(svg),{density:160}).png().toFile(`${destination}/${name}.png`);
   }
-  // Mermaid source is also directly rendered by GitHub Markdown.
-  let mermaid='erDiagram\n';
-  for(const [name,fields] of Object.entries(entities)) {
-    mermaid+=`  ${name} {\n`;
-    for(const [field,type,key=''] of fields) mermaid+=`    ${type.split(' ')[0].replace(/[()]/g,'_')} ${field}${key?' '+key.replaceAll(',',', '):''}\n`;
-    mermaid+='  }\n';
-  }
-  for(const [parent,child,label,,nullable] of links) mermaid+=`  ${parent} ${nullable?'|o':'||'}${child==='recipe_ingredient'?'--':'..'}o{ ${child} : "${label}"\n`;
-  writeFileSync('docs/er-diagram.mmd',mermaid);
   writeFileSync('docs/schema-model.json',JSON.stringify({entities,links},null,2)+'\n');
-  console.log('Generated Chen and Crow’s Foot SVG/PNG/DOT, plus Mermaid source for all 9 tables.');
+  console.log('Generated Chen SVG/PNG/DOT and schema model for all 9 tables.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -7,6 +7,8 @@
 PES University · CSE (AI & ML) · DBMS Project  
 Report date: 2 November 2026
 
+**Open the local app:** [http://localhost:3000](http://localhost:3000) · [Alternative port 3001](http://localhost:3001). Run `npm start` on your Mac first; these addresses are local, not a GitHub-hosted deployment.
+
 ## 2. Student SRNs and Names
 
 | Student name | SRN |
@@ -54,9 +56,7 @@ CSS variables hold the color palette. Grid arranges recipe cards; Flexbox aligns
 
 **Standard Chen notation:** rectangles represent entities, diamonds represent relationships, ovals represent selected attributes and underlined attributes form primary keys. Parent/child cardinalities and optionality are labeled.
 
-![Complete logical ER diagram in Crow’s Foot notation](PantryPal_Report_Assets/er-crows-foot.png)
-
-The Crow’s Foot version lists every column of all nine tables with PK/FK/UK markings, optionality and identifying/non-identifying relationships. [Open Chen SVG](PantryPal_Report_Assets/er-diagram.svg) · [Open Crow’s Foot SVG](PantryPal_Report_Assets/er-crows-foot.svg) · [Notation and migration details](docs/database-design.md). Regenerate with `npm run diagrams`.
+**Chen is the only ER diagram included.** The diagram shows all nine entities, relationship diamonds, selected attribute ovals and underlined primary keys. [Open the Chen SVG](PantryPal_Report_Assets/er-diagram.svg) · [Notation and migration details](docs/database-design.md). Consult `schema.sql` for the complete column definitions; regenerate the diagram with `npm run diagrams`.
 
 | Table | Purpose | Key relationships or constraints |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ The Crow’s Foot version lists every column of all nine tables with PK/FK/UK ma
 
 **PK** uniquely identifies a row; **FK** connects it to another table. One user can own many pantry entries, create many recipes, give many ratings and own many meal plans. One ingredient can appear in many pantry entries. One recipe can receive many ratings and appear in many scheduled meal entries.
 
-`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The logical diagram includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The conceptual diagram intentionally selects attributes for readability; the logical diagram contains the complete field list.
+`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The SQL schema includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The conceptual diagram intentionally selects attributes for readability; the SQL schema contains the complete field list.
 
 ## 5. SQL Database Commands
 
@@ -619,7 +619,7 @@ PantryPal/
 │   └── generate-er-diagrams.js
 ├── tests/auth.test.js
 ├── docs/
-│   ├── database-design.md / er-diagram.mmd
+│   ├── database-design.md / schema-model.json
 │   └── CHANGELOG.md
 └── PantryPal_Report_Assets/
     └── screenshots and generated ER diagrams
@@ -702,7 +702,7 @@ open http://localhost:3000
 
 ## 8. Sample Screenshots of Application Code and Demo
 
-Figures 1–12 are the supplied screenshots from the earlier demo version, preserved without alteration. They show the eight original business tables, historical counts and the former demo user selector. The current application adds authentication and a ninth session table; Figures 13 onward show the updated UI. Do not treat the old selector or table count as current behavior. The captions identify what each image demonstrates. Images remain readable at full size when opened from the asset folder. Database values are snapshots and may change as dates pass or new searches/meals are added.
+Figures 1–12 are the supplied screenshots from the earlier demo version, preserved without alteration. They show the eight original business tables, historical counts and the former demo user selector. The current application adds authentication and a ninth session table; Figure 13 shows the current sign-in page supplied by the team. Do not treat the old selector or table count as current behavior. The captions identify what each image demonstrates. Images remain readable at full size when opened from the asset folder. Database values are snapshots and may change as dates pass or new searches/meals are added.
 
 ### Figure 1 — PostgreSQL connection and eight tables
 
@@ -778,27 +778,9 @@ Shows an executed unwind, group, sort and limit pipeline. Results include onion 
 
 ### Figure 13 — Current sign-in page
 
-![PantryPal email and password sign-in](PantryPal_Report_Assets/13-auth-login.png)
+![PantryPal sign-in page supplied by the team](PantryPal_Report_Assets/13-user-login.png)
 
-The authentication entry page replaces the old demo selector. API middleware verifies the signed-in session before returning private data.
-
-### Figure 14 — Current account registration
-
-![PantryPal registration form](PantryPal_Report_Assets/14-auth-register.png)
-
-Registration takes a name, email, diet preference and password. It creates a regular user, default weekly plan and session in one transaction.
-
-### Figure 15 — Current authenticated recipe recommendations
-
-![Recommendations for signed-in Aarav](PantryPal_Report_Assets/15-authenticated-recipes.png)
-
-The header identifies the signed-in account and provides Sign out. Recipe cards label the counter as planned. User ownership is no longer selected by a browser ID.
-
-### Figure 16 — Current pantry form and expiry groups
-
-![Authenticated pantry with ingredient entry form](PantryPal_Report_Assets/16-authenticated-pantry.png)
-
-The signed-in user can add or update ingredients with purchase dates and quantities. Existing pantry information is preserved by the authentication migration.
+Team-supplied screenshot of the current authentication page, including Sign in and Create account options, email/password fields and the sign-in button. The old demo account selector has been replaced by authenticated identity.
 
 ### 8.1 Evidence still to add
 
@@ -818,7 +800,7 @@ The signed-in user can add or update ingredients with purchase dates and quantit
 
 ## 9. Evaluation Rubrics — Completion Status
 
-Status reflects the code and supplied screenshot evidence. Official grading weights were not provided. Historical screenshots are user-provided demonstration evidence. Authentication and authorization checks run in isolated databases with `npm test`; current browser screenshots verify the updated flow.
+Status reflects the code and supplied screenshot evidence. Official grading weights were not provided. Historical screenshots are user-provided demonstration evidence. Authentication and authorization checks run in isolated databases with `npm test`; the team-supplied sign-in screenshot documents the current authentication screen.
 
 | Requirement | Status | Evidence or remaining action |
 | --- | --- | --- |
@@ -826,7 +808,7 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Student SRNs and names | Complete | Section 2. |
 | Abstract | Complete | Section 3. |
 | Technology stack | Complete | Section 4 documents the implemented stack. |
-| Minimum five relational tables | Implemented | Nine tables: eight business entities and app_session; current standard ER diagrams above. Figure 1 is historical. |
+| Minimum five relational tables | Implemented | Nine tables: eight business entities and app_session; the current Chen ER diagram above. Figure 1 is historical. |
 | SQL database commands | Implemented and documented | Setup, inspection, table data and all six report queries. |
 | More than four database feature use cases | Documented | Eleven features in Section 5.2, with actual use cases and code/examples. |
 | Trigger | Implemented and installed | Figure 4 shows its definition; before/after insert capture remains to add. |
@@ -837,9 +819,9 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Reports | Implemented with partial/full UI evidence | Six SQL reports in code, R1–R4 partly shown; M1–M3 fully shown. M4–M6 are script reports. |
 | Novelty | Implemented and demonstrated | Expiry-aware rankings differ between users; Figures 3, 6 and 7. |
 | Next.js project tree | Requirement unresolved | Actual code uses Express. Resolve required framework before final submission. |
-| Authentication | Implemented and tested | Register, sign in, sign out, session expiry and ownership checks; current screenshots in Section 8. |
-| Standard ER notation | Updated | Chen conceptual and complete Crow’s Foot logical diagrams with editable sources. |
-| Application screenshots | Included | Historical sample use plus current authenticated UI screenshots in Section 8. |
+| Authentication | Implemented and tested | Register, sign in, sign out, session expiry and ownership checks; the team-supplied sign-in screenshot in Section 8. |
+| Standard ER notation | Updated | Chen notation with entity rectangles, relationship diamonds, attribute ovals and editable sources. |
+| Application screenshots | Included | Historical team-supplied sample use plus the current team-supplied sign-in screenshot in Section 8. |
 | Application code screenshot | Partially covered | Executed Mongo pipeline image and source blocks included; IDE screenshot pending. |
 | Markdown report | Created | This `.md` file and its linked image assets. |
 | GitHub repository link | Provided | https://github.com/pranav6126/DBMS-Project-PantryPal |
@@ -864,7 +846,7 @@ The repository contains the application source, authentication modules, migratio
 ### 9.3 Submission checklist
 
 - [x] Add names, SRNs, abstract and implemented stack.
-- [x] Include standard Chen and Crow’s Foot ER diagrams, session table and database explanations.
+- [x] Include the standard Chen ER diagram, session table and database explanations.
 - [x] Implement registration, sign-in, logout and session-scoped APIs.
 - [x] Explain more than four database feature use cases.
 - [x] Include supplied PostgreSQL, UI and MongoDB screenshots.
@@ -876,4 +858,4 @@ The repository contains the application source, authentication modules, migratio
 
 - Supplied `PantryPal_App_new_UI (1).zip`: `public/index.html`, `server.js`, `package.json`, README and database scripts.
 - Supplied ER diagram and project status PDF. Actual code takes priority where the earlier status PDF describes unimplemented screens.
-- Twelve original supplied screenshots plus four current browser captures showing sign-in, registration, authenticated recommendations and the pantry form.
+- Thirteen team-supplied screenshots: twelve sample-use screenshots and the current sign-in screenshot. Agent-captured screenshots have been removed.

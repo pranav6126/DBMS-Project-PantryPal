@@ -2,13 +2,16 @@
 
 Personal pantry management and expiry-aware recipe recommendations with email/password authentication.
 
+**Open locally:** [http://localhost:3000](http://localhost:3000) · [Alternative port 3001](http://localhost:3001)
+
+Start the app with `npm start` on your Mac. These are local addresses, not a GitHub-hosted website.
+
 **Team:** Pranav V Menon (PES1UG24AM198) and Purvik V Gowda (PES1UG24AM211), PES University, CSE (AI & ML).
 
-## Report and standard ER diagrams
+## Report and Chen ER diagram
 
 - [DBMS project report](PantryPal_DBMS_Project_Report.md)
 - [Chen ER diagram](PantryPal_Report_Assets/er-diagram.svg): rectangles, relationship diamonds, attribute ovals and underlined primary keys.
-- [Crow’s Foot ER diagram](PantryPal_Report_Assets/er-crows-foot.svg): all nine tables and columns, PK/FK/UK markers, optionality and cardinality.
 - [Diagram notation and schema details](docs/database-design.md)
 
 ## Stack
@@ -79,7 +82,7 @@ npm run diagrams
 
 Tests create and remove a dedicated temporary PostgreSQL database and use a separate temporary MongoDB database. The database user needs CREATEDB permission. Tests cover password hashing, registration, duplicate emails, login, authorization, cross-origin writes, pantry ownership, planning/trigger behavior, report scoping, logout and session expiry. The demo database is not reset by the tests. `PGTEST_ADMIN_DATABASE` defaults to `postgres`.
 
-Diagram generation uses the development dependencies `@viz-js/viz` and `sharp` to create editable SVG/DOT, PNG and Mermaid files. See [database design](docs/database-design.md). The full model includes nullable recipe creators and the session relationship.
+Diagram generation uses the development dependencies `@viz-js/viz` and `sharp` to create editable Chen SVG/DOT and PNG files. See [database design](docs/database-design.md). The full model includes nullable recipe creators and the session relationship.
 
 ## Configuration
 
@@ -87,6 +90,6 @@ Diagram generation uses the development dependencies `@viz-js/viz` and `sharp` t
 
 ## Database and implementation notes
 
-`times_cooked` is the existing database field name, but the UI labels it **planned** because its trigger counts meal-plan insertions. Expired ingredients are excluded from both ranking and the missing-ingredient presence check. Quantity remains descriptive text; sufficient amounts are not calculated. Existing user screenshots are retained in the report as historical evidence and distinguished from current authentication screenshots.
+`times_cooked` is the existing database field name, but the UI labels it **planned** because its trigger counts meal-plan insertions. Expired ingredients are excluded from both ranking and the missing-ingredient presence check. Quantity remains descriptive text; sufficient amounts are not calculated. Existing user screenshots are retained in the report as historical evidence and distinguished from the team-supplied current sign-in screenshot.
 
 Official references: [Node.js crypto](https://nodejs.org/api/crypto.html), [Express cookie security](https://expressjs.com/en/advanced/best-practice-security/).

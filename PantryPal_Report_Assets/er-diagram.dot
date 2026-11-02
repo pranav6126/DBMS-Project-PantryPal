@@ -61,5 +61,5 @@ relationship10 [shape=diamond label="authenticates" style=filled fillcolor="#f7f
 app_user -- relationship10 [headlabel="1" labeldistance=1.7]; relationship10 -- app_session [taillabel="0..N" labeldistance=1.7];
 label="PantryPal conceptual ER diagram — Chen notation
 Rectangle: entity   Diamond: relationship   Ellipse: attribute   Underline: primary key
-Selected attributes shown for readability; Crow’s Foot diagram lists every column.
+Selected attributes shown for readability; schema.sql lists every column.
 Labels describe the number of related rows at each end."; labelloc=b; fontsize=14; }
