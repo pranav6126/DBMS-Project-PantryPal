@@ -11,7 +11,7 @@ Start the app with `npm start` on your Mac. These are local addresses, not a Git
 ## Report and Chen ER diagram
 
 - [DBMS project report](PantryPal_DBMS_Project_Report.md)
-- [Chen ER diagram](PantryPal_Report_Assets/er-diagram.svg): rectangles, relationship diamonds, attribute ovals and underlined primary keys.
+- [Chen ER diagram](PantryPal_Report_Assets/er-diagram.png): team-supplied conceptual design with a weak entity, identifying relationship, total participation and a derived attribute.
 - [Diagram notation and schema details](docs/database-design.md)
 
 ## Stack
@@ -73,7 +73,7 @@ mongosh --file pantrypal_code/mongo_reports.js
 
 The web tab shows M1–M3. Ranking requests save search logs; adding a meal marks the latest unclicked search. If MongoDB is unavailable, core PostgreSQL features still work. `MONGO_URL` defaults to `mongodb://127.0.0.1:27017` and `MONGO_DATABASE` defaults to `pantrypal_nosql`.
 
-## Tests and diagram regeneration
+## Tests and diagram verification
 
 ```bash
 npm test
@@ -82,7 +82,7 @@ npm run diagrams
 
 Tests create and remove a dedicated temporary PostgreSQL database and use a separate temporary MongoDB database. The database user needs CREATEDB permission. Tests cover password hashing, registration, duplicate emails, login, authorization, cross-origin writes, pantry ownership, planning/trigger behavior, report scoping, logout and session expiry. The demo database is not reset by the tests. `PGTEST_ADMIN_DATABASE` defaults to `postgres`.
 
-Diagram generation uses the development dependencies `@viz-js/viz` and `sharp` to create editable Chen SVG/DOT and PNG files. See [database design](docs/database-design.md). The full model includes nullable recipe creators and the session relationship.
+`npm run diagrams` verifies the approved team-supplied image is present; it does not redraw or overwrite it. See [database design](docs/database-design.md) for how the conceptual entities map to the nine SQL tables and the current weak-key implementation difference.
 
 ## Configuration
 

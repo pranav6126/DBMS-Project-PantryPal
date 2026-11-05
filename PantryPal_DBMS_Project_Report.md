@@ -54,9 +54,13 @@ CSS variables hold the color palette. Grid arranges recipe cards; Flexbox aligns
 
 ![PantryPal conceptual ER diagram in Chen notation](PantryPal_Report_Assets/er-diagram.png)
 
-**Standard Chen notation:** rectangles represent entities, diamonds represent relationships, ovals represent selected attributes and underlined attributes form primary keys. Parent/child cardinalities and optionality are labeled.
+**Team-supplied Chen diagram:** double rectangles show the weak `MEAL_PLAN_ITEM` entity, a double diamond shows its identifying `includes` relationship, double connections show total participation, and the dashed `days_left` oval is a derived attribute. The dashed underline identifies a partial key; solid underlines identify entity keys.
 
-**Chen is the only ER diagram included.** The diagram shows all nine entities, relationship diamonds, selected attribute ovals and underlined primary keys. [Open the Chen SVG](PantryPal_Report_Assets/er-diagram.svg) · [Notation and migration details](docs/database-design.md). Consult `schema.sql` for the complete column definitions; regenerate the diagram with `npm run diagrams`.
+The diagram presents five conceptual entity types. Its many-to-many `stocks`, `uses` and `rates` relationships map to `pantry_item`, `recipe_ingredient` and `rating`, yielding eight business tables. `app_session` is the ninth implementation table for authentication and is intentionally outside this business-level view. `USER` maps to SQL `app_user`.
+
+[Open the supplied diagram at full size](PantryPal_Report_Assets/er-diagram.png) · [Conceptual-to-SQL mapping](docs/database-design.md).
+
+**Key implementation detail:** the supplied conceptual diagram models `MEAL_PLAN_ITEM` as weak with partial key `item_id`; its full conceptual identity is `(plan_id, item_id)`. The current SQL still uses globally unique `item_id SERIAL PRIMARY KEY` plus a required plan foreign key. Replacing the image does not perform a database-key migration. The report distinguishes the proposed weak identity from the implemented key.
 
 | Table | Purpose | Key relationships or constraints |
 | --- | --- | --- |
@@ -72,7 +76,7 @@ CSS variables hold the color palette. Grid arranges recipe cards; Flexbox aligns
 
 **PK** uniquely identifies a row; **FK** connects it to another table. One user can own many pantry entries, create many recipes, give many ratings and own many meal plans. One ingredient can appear in many pantry entries. One recipe can receive many ratings and appear in many scheduled meal entries.
 
-`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The SQL schema includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The conceptual diagram intentionally selects attributes for readability; the SQL schema contains the complete field list.
+`recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The SQL schema includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The supplied conceptual diagram groups several relationships rather than drawing each SQL junction table; the SQL schema and table summary contain the implementation field details.
 
 ## 5. SQL Database Commands
 
@@ -616,13 +620,13 @@ PantryPal/
 │   └── migrations/001_auth.sql
 ├── scripts/
 │   ├── setup-demo-auth.js
-│   └── generate-er-diagrams.js
+│   └── check-er-diagram.js
 ├── tests/auth.test.js
 ├── docs/
 │   ├── database-design.md / schema-model.json
 │   └── CHANGELOG.md
 └── PantryPal_Report_Assets/
-    └── screenshots and generated ER diagrams
+    └── screenshots and the supplied Chen ER diagram
 ```
 
 ### 7.1 Node.js and Express code
@@ -808,7 +812,7 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Student SRNs and names | Complete | Section 2. |
 | Abstract | Complete | Section 3. |
 | Technology stack | Complete | Section 4 documents the implemented stack. |
-| Minimum five relational tables | Implemented | Nine tables: eight business entities and app_session; the current Chen ER diagram above. Figure 1 is historical. |
+| Minimum five relational tables | Implemented | Nine tables: eight business entities and app_session; the conceptual image maps to eight business tables; app_session is an additional implementation table. Figure 1 is historical. |
 | SQL database commands | Implemented and documented | Setup, inspection, table data and all six report queries. |
 | More than four database feature use cases | Documented | Eleven features in Section 5.2, with actual use cases and code/examples. |
 | Trigger | Implemented and installed | Figure 4 shows its definition; before/after insert capture remains to add. |
@@ -820,7 +824,7 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Novelty | Implemented and demonstrated | Expiry-aware rankings differ between users; Figures 3, 6 and 7. |
 | Next.js project tree | Requirement unresolved | Actual code uses Express. Resolve required framework before final submission. |
 | Authentication | Implemented and tested | Register, sign in, sign out, session expiry and ownership checks; the team-supplied sign-in screenshot in Section 8. |
-| Standard ER notation | Updated | Chen notation with entity rectangles, relationship diamonds, attribute ovals and editable sources. |
+| Standard ER notation | Updated | Team-supplied Chen diagram includes weak entity, identifying relationship, total participation and derived attribute; key implementation difference is explained in Section 4.2. |
 | Application screenshots | Included | Historical team-supplied sample use plus the current team-supplied sign-in screenshot in Section 8. |
 | Application code screenshot | Partially covered | Executed Mongo pipeline image and source blocks included; IDE screenshot pending. |
 | Markdown report | Created | This `.md` file and its linked image assets. |
@@ -830,7 +834,7 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 
 **Repository URL: https://github.com/pranav6126/DBMS-Project-PantryPal**
 
-The repository contains the application source, authentication modules, migration, tests, diagram generator, README setup steps, this report and `PantryPal_Report_Assets/`. Exclude `node_modules`, credentials and local configuration files containing secrets. Keep the report and asset folder together so relative image links work on GitHub.
+The repository contains the application source, authentication modules, migration, tests, diagram verification script, README setup steps, this report and `PantryPal_Report_Assets/`. Exclude `node_modules`, credentials and local configuration files containing secrets. Keep the report and asset folder together so relative image links work on GitHub.
 
 ### 9.2 Current implementation limits
 
