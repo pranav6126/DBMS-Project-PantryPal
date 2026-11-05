@@ -26,3 +26,9 @@ The existing Express architecture remains; no Next.js migration is claimed.
 - Replaced the generated Chen image with the team-supplied diagram, without altering the image.
 - Removed obsolete generated SVG/DOT files and replaced the generator with an image verification script so the approved image cannot be overwritten.
 - Updated the README and report to map the five conceptual entities and three many-to-many relationships to the business tables. Documented the difference between the conceptual weak key and current SQL primary key; no database migration is applied by this image replacement.
+
+## Relational schema documentation
+
+- Added the exact team-supplied eight-relation schema image alongside the conceptual Chen diagram.
+- Updated the report, README and database-design notes to explain primary keys, foreign keys, junction tables and reference arrows.
+- Distinguished the eight business relations shown from the additional authentication session table and omitted user creation timestamp. No SQL or API behavior changes are required by this image.

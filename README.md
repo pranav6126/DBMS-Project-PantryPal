@@ -8,10 +8,11 @@ Start the app with `npm start` on your Mac. These are local addresses, not a Git
 
 **Team:** Pranav V Menon (PES1UG24AM198) and Purvik V Gowda (PES1UG24AM211), PES University, CSE (AI & ML).
 
-## Report and Chen ER diagram
+## Report and database diagrams
 
 - [DBMS project report](PantryPal_DBMS_Project_Report.md)
 - [Chen ER diagram](PantryPal_Report_Assets/er-diagram.png): team-supplied conceptual design with a weak entity, identifying relationship, total participation and a derived attribute.
+- [Relational schema](PantryPal_Report_Assets/relational-schema.png): eight business relations with primary keys, foreign keys and reference arrows; the ninth authentication table is documented separately.
 - [Diagram notation and schema details](docs/database-design.md)
 
 ## Stack
@@ -82,7 +83,7 @@ npm run diagrams
 
 Tests create and remove a dedicated temporary PostgreSQL database and use a separate temporary MongoDB database. The database user needs CREATEDB permission. Tests cover password hashing, registration, duplicate emails, login, authorization, cross-origin writes, pantry ownership, planning/trigger behavior, report scoping, logout and session expiry. The demo database is not reset by the tests. `PGTEST_ADMIN_DATABASE` defaults to `postgres`.
 
-`npm run diagrams` verifies the approved team-supplied image is present; it does not redraw or overwrite it. See [database design](docs/database-design.md) for how the conceptual entities map to the nine SQL tables and the current weak-key implementation difference.
+`npm run diagrams` verifies the approved team-supplied Chen and relational schema images are present; it does not redraw or overwrite them. See [database design](docs/database-design.md) for how the conceptual entities map to the nine SQL tables and the current weak-key implementation difference.
 
 ## Configuration
 

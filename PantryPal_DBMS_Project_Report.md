@@ -78,6 +78,18 @@ The diagram presents five conceptual entity types. Its many-to-many `stocks`, `u
 
 `recipe_ingredient` resolves the many-to-many relationship between recipes and ingredients using two one-to-many relationships. Its composite key prevents a duplicate ingredient pair in the same recipe. `meal_plan` and `meal_plan_item` separate plan-level details from each scheduled meal. The SQL schema includes `app_user.created_at`. One user can own zero or many sessions, each belonging to exactly one user. `recipe.created_by` is nullable, so a recipe can have zero or one creator. The supplied conceptual diagram groups several relationships rather than drawing each SQL junction table; the SQL schema and table summary contain the implementation field details.
 
+### 4.3 Relational schema
+
+![PantryPal relational schema showing eight business tables and foreign keys](PantryPal_Report_Assets/relational-schema.png)
+
+This team-supplied relational schema shows the eight business tables as rows of attributes. Underlined attributes are primary keys, shaded attributes are foreign keys, and each arrow points from a foreign key to the primary key it references. `recipe_ingredient` uses the composite primary key `(recipe_id, ingredient_id)`; both columns are also foreign keys.
+
+Unlike the conceptual Chen diagram, this implementation view represents `meal_plan_item.item_id` as its standalone primary key, matching the current SQL. Its `plan_id` and `recipe_id` connect the scheduled meal to a plan and a recipe. `pantry_item` connects users to ingredients; `rating` connects users to recipes.
+
+**Scope:** the image contains eight business relations. The running database additionally has the ninth `app_session` table for authentication, with `user_id` referencing `app_user`. The image also omits `app_user.created_at`. These implementation details remain documented in the table summary and SQL schema above. The Chen diagram describes the conceptual model; this relational schema describes its business-table mapping.
+
+[Open the relational schema at full size](PantryPal_Report_Assets/relational-schema.png).
+
 ## 5. SQL Database Commands
 
 ### 5.1 Setup and inspection
@@ -824,6 +836,7 @@ Status reflects the code and supplied screenshot evidence. Official grading weig
 | Novelty | Implemented and demonstrated | Expiry-aware rankings differ between users; Figures 3, 6 and 7. |
 | Next.js project tree | Requirement unresolved | Actual code uses Express. Resolve required framework before final submission. |
 | Authentication | Implemented and tested | Register, sign in, sign out, session expiry and ownership checks; the team-supplied sign-in screenshot in Section 8. |
+| Relational schema | Included | Team-supplied eight-relation diagram with PK/FK arrows; ninth authentication table documented separately in Section 4.3. |
 | Standard ER notation | Updated | Team-supplied Chen diagram includes weak entity, identifying relationship, total participation and derived attribute; key implementation difference is explained in Section 4.2. |
 | Application screenshots | Included | Historical team-supplied sample use plus the current team-supplied sign-in screenshot in Section 8. |
 | Application code screenshot | Partially covered | Executed Mongo pipeline image and source blocks included; IDE screenshot pending. |
@@ -850,7 +863,7 @@ The repository contains the application source, authentication modules, migratio
 ### 9.3 Submission checklist
 
 - [x] Add names, SRNs, abstract and implemented stack.
-- [x] Include the standard Chen ER diagram, session table and database explanations.
+- [x] Include the Chen ER diagram, relational schema, session table and database explanations.
 - [x] Implement registration, sign-in, logout and session-scoped APIs.
 - [x] Explain more than four database feature use cases.
 - [x] Include supplied PostgreSQL, UI and MongoDB screenshots.
@@ -861,5 +874,5 @@ The repository contains the application source, authentication modules, migratio
 ### Source material
 
 - Supplied `PantryPal_App_new_UI (1).zip`: `public/index.html`, `server.js`, `package.json`, README and database scripts.
-- Supplied ER diagram and project status PDF. Actual code takes priority where the earlier status PDF describes unimplemented screens.
+- Supplied Chen ER diagram, relational schema image and project status PDF. Actual code takes priority where the earlier status PDF describes unimplemented screens.
 - Thirteen team-supplied screenshots: twelve sample-use screenshots and the current sign-in screenshot. Agent-captured screenshots have been removed.
